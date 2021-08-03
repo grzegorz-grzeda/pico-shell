@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: egor-tensin/setup-gcc@v1
+
+      - name: Compile project
+        run: python3 build.py
+      
+      - uses: actions/upload-artifact@v2
+        with:
+          name: x64-build
+          path: build/x64/
