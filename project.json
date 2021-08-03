@@ -1,0 +1,20 @@
+{
+    "name": "pico-shell",
+    "build-dir":"build",
+    "platforms": {
+        "x64": {
+            "sources": [
+                "platform/x64/main.c"
+            ],
+            "includes":[
+                "-I."
+            ],
+            "steps":{
+                "clear":"rm -rf $build-dir",
+                "pre-compile":"mkdir -p $object-dir",
+                "compile":"gcc $includes -c $source -o $object",
+                "link": "gcc $objects -o $target"
+            }
+        }
+    }
+}
