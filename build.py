@@ -44,7 +44,7 @@ def link_all(project, platform, objects):
     build_dir = f"{project['build-dir']}/{platform}"
     target = f"{build_dir}/{project['name']}"
     link_cmd = project['platforms'][platform]['steps']['link']
-    link_cmd = link_cmd.replace('$objects', *objects)
+    link_cmd = link_cmd.replace('$objects', " ".join(objects))
     link_cmd = link_cmd.replace('$target', target)
     run_command_string(link_cmd)
 
