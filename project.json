@@ -7,7 +7,8 @@
                 "platform/x64/main.c"
             ],
             "includes":[
-                "-I."
+                "-I.",
+                "-Isrc"
             ],
             "steps":{
                 "clear":"rm -rf $build-dir",
