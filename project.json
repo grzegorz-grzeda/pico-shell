@@ -6,6 +6,7 @@
             "sources": [
                 "platform/x64/main.c",
                 "src/psh.c",
+                "src/cli/psh_cli.c",
                 "src/utils/psh_utils.c"
             ],
             "includes":[

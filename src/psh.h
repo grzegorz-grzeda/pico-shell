@@ -8,6 +8,7 @@
 struct psh_node_t;
 
 typedef struct psh_process_t{
+    struct psh_node_t *root;
     struct psh_node_t *file;
     struct psh_node_t *stdin;
     struct psh_node_t *stdout;
@@ -28,6 +29,8 @@ typedef struct psh_node_t
     psh_file_io_cb read;
     psh_file_io_cb write;
     psh_file_exe_cb execute;
+    int _chars_read;
+    int _chars_written;
     int _is_open;
 } psh_node;
 
@@ -45,12 +48,20 @@ typedef struct psh_context_t
 {
     struct
     {
-        char *buffer;
-        int size;
-        int _cnt;
+        struct {
+            char *buffer;
+            int size;
+            int _cnt;
+        }input;
+        struct {
+            char **params;
+            int size;
+            int _cnt;
+        }cmd_params;
         const char* ps1;
         char delimiter;
         char new_line;
+        int echo;
     } cli;
     psh_node *_root;
     struct psh_node_t *_stdin;
@@ -61,7 +72,7 @@ typedef struct psh_context_t
 int psh_init(psh_context *context, psh_node *root_node, psh_file *stdin, psh_file *stdout, psh_file *stderr);
 int psh_mound_file(psh_context *context, psh_file *file);
 
-psh_file *psh_open(psh_context *context, const char *name);
+psh_file *psh_open(psh_node *root, const char *name);
 int psh_write(psh_file *fd, char *buffer, int count);
 int psh_read(psh_file *fd, char *buffer, int count);
 int psh_close(psh_file *fd);
