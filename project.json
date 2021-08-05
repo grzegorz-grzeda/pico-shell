@@ -4,7 +4,9 @@
     "platforms": {
         "x64": {
             "sources": [
-                "platform/x64/main.c"
+                "platform/x64/main.c",
+                "src/psh.c",
+                "src/utils/psh_utils.c"
             ],
             "includes":[
                 "-I.",
