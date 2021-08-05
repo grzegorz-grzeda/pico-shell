@@ -4,20 +4,30 @@
  * @addtogroup psh_group
  * @{
  */
+
 struct psh_node_t;
 
+typedef struct psh_process_t{
+    struct psh_node_t *file;
+    struct psh_node_t *stdin;
+    struct psh_node_t *stdout;
+    struct psh_node_t *stderr;
+}psh_process;
+
+typedef int (*psh_file_opt_cb)(struct psh_node_t *file);
 typedef int (*psh_file_io_cb)(struct psh_node_t *file, char *buffer, int count);
-typedef int (*psh_file_exe_cb)(struct psh_node_t *file, int argc, char **argv);
+typedef int (*psh_file_exe_cb)(struct psh_process_t *process, int argc, char **argv);
 
 typedef struct psh_node_t
 {
+    struct psh_node_t *_next;
     const char *name;
     const char *help;
+    psh_file_opt_cb open;
+    psh_file_opt_cb close;
     psh_file_io_cb read;
     psh_file_io_cb write;
     psh_file_exe_cb execute;
-    struct psh_node_t *_next;
-    struct psh_node_t *_next_in_path;
     int _is_open;
 } psh_node;
 
@@ -37,30 +47,28 @@ typedef struct psh_context_t
     {
         char *buffer;
         int size;
-        psh_cli_io_cb io;
         int _cnt;
-    } input;
-    struct
-    {
-        char *buffer;
-        int size;
-        psh_cli_io_cb io;
-        int _cnt;
-    } output;
-    psh_node *_path;
+        const char* ps1;
+        char delimiter;
+        char new_line;
+    } cli;
     psh_node *_root;
+    struct psh_node_t *_stdin;
+    struct psh_node_t *_stdout;
+    struct psh_node_t *_stderr;
 } psh_context;
 
-int psh_init(psh_context *context, psh_node *root_node);
-int psh_mound_file(psh_node *parent, psh_file *file);
-int psh_add_to_path(psh_context *context, psh_node *path);
+int psh_init(psh_context *context, psh_node *root_node, psh_file *stdin, psh_file *stdout, psh_file *stderr);
+int psh_mound_file(psh_context *context, psh_file *file);
 
 psh_file *psh_open(psh_context *context, const char *name);
 int psh_write(psh_file *fd, char *buffer, int count);
 int psh_read(psh_file *fd, char *buffer, int count);
 int psh_close(psh_file *fd);
 
-int psh_process(psh_context *cli);
+int psh_print(psh_file *fd, const char *text);
+
+int psh_execute(psh_context *context);
 
 /**
  * @}

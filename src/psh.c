@@ -1,12 +1,10 @@
 #include "psh.h"
 #include "utils/psh_utils.h"
 
-int psh_init(psh_context *cli, psh_node *root_node)
+int psh_init(psh_context *ctx, psh_node *root_node, psh_file *stdin, psh_file *stdout, psh_file *stderr)
 {
-    if (cli != 0 && root_node != 0)
+    if (ctx != 0 && root_node != 0 && stdin != 0 && stdout != 0)
     {
-        cli->input._cnt = 0;
-        cli->output._cnt = 0;
         root_node->name = "/";
         root_node->help = "Root directory";
         root_node->read = 0;
@@ -14,9 +12,15 @@ int psh_init(psh_context *cli, psh_node *root_node)
         root_node->execute = 0;
         root_node->_is_open = 0;
         root_node->_next = 0;
-        root_node->_next_in_path = 0;
-        cli->_root = root_node;
-        cli->_path = root_node;
+        ctx->_stdin = stdin;
+        ctx->_stdin->_is_open = 1;
+        ctx->_stdout = stdout;
+        ctx->_stdout->_is_open = 1;
+        ctx->_stderr = (stderr) ? stderr : stdout;
+        ctx->_stderr->_is_open = 1;
+        ctx->_root = root_node;
+        ctx->cli._cnt = 0;
+        psh_print(ctx->_stdout,ctx->cli.ps1);
     }
     else
     {
@@ -24,11 +28,11 @@ int psh_init(psh_context *cli, psh_node *root_node)
     }
 }
 
-int psh_mound_file(psh_node *parent, psh_file *file)
+int psh_mound_file(psh_context *context, psh_file *file)
 {
-    if (parent && file)
+    if (context && file)
     {
-        psh_node *last_parent = parent;
+        psh_node *last_parent = context->_root;
         while (last_parent->_next)
         {
             last_parent = last_parent->_next;
@@ -40,16 +44,6 @@ int psh_mound_file(psh_node *parent, psh_file *file)
     {
         return -1;
     }
-}
-int psh_add_to_path(psh_context *context, psh_node *path)
-{
-    psh_node *last_in_path = context->_path;
-    while (last_in_path->_next_in_path)
-    {
-        last_in_path = last_in_path->_next_in_path;
-    }
-    last_in_path->_next_in_path = path;
-    path->_next_in_path = 0;
 }
 
 psh_file *psh_open(psh_context *context, const char *name)
@@ -107,6 +101,32 @@ int psh_close(psh_file *fd)
     }
 }
 
-int psh_process(psh_context *cli)
+int psh_print(psh_file *fd, const char *text)
 {
+    while (*text)
+    {
+        fd->write(fd, (char *)text++, 1);
+    }
+}
+
+int psh_execute(psh_context *context)
+{
+    int ret_val = 0;
+    char c;
+    int result = context->_stdin->read(context->_root, &c, 1);
+
+    if (result)
+    {
+        if (c == context->cli.new_line)
+        {
+            // parse & execute
+            psh_print(context->_stdout, "\n");
+            psh_print(context->_stdout, context->cli.ps1);
+        }
+        else
+        {
+            context->cli.buffer[context->cli._cnt++] = c;
+        }
+    }
+    return ret_val;
 }
