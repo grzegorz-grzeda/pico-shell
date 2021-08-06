@@ -1,18 +1,19 @@
-#include "psh.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include "fs/psh_fs.h"
+#include "fs/psh_cmd.h"
 
-int get_char(struct psh_node_t *file, char *buffer, int count)
+int get_char(struct psh_file_t *file, char *buffer, int count)
 {
     return read(0, buffer, count);
 }
 
-int put_char(struct psh_node_t *file, char *buffer, int count)
+int put_char(struct psh_file_t *file, char *buffer, int count)
 {
     return write(1, buffer, count);
 }
-
+/*
 int execute(struct psh_process_t *proc, int argc, char **argv)
 {
     psh_print(proc->stdout, "In basic-command!\n");
@@ -28,8 +29,11 @@ int read_some_file(struct psh_node_t *file, char *buffer, int count)
 
 #define BUF_SIZE 1000
 #define PARAM_SIZE 10
+#define MAX_NODES 100
 char inbuf[BUF_SIZE];
 char *parambuf[PARAM_SIZE];
+
+psh_node node_buffer[MAX_NODES];
 
 psh_context cli;
 psh_node root;
@@ -37,9 +41,22 @@ psh_file stdin_file;
 psh_file stdout_file;
 psh_node basic_command;
 psh_node some_file;
+*/
+
+#define MAX_NODES 100
+psh_file nodes[MAX_NODES];
 
 int main(void)
 {
+    psh_init_fs(nodes, MAX_NODES);
+    psh_mount_std(get_char, put_char, put_char);
+    psh_add_util_cmds();
+    for (psh_file *f = nodes; f != 0; f = f->_next)
+    {
+        printf("%s - %s\n", f->name, f->help);
+    }
+
+    /*
     stdin_file.read = get_char;
     stdout_file.write = put_char;
     cli.cli.input.buffer = inbuf;
@@ -64,4 +81,5 @@ int main(void)
 
     while (1)
         psh_execute(&cli);
+        */
 }
