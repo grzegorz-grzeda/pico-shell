@@ -1,8 +1,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include "fs/psh_fs.h"
-#include "fs/psh_cmd.h"
+#include "psh.h"
+#include "utils/psh_cmd.h"
 
 int get_char(struct psh_file_t *file, char *buffer, int count)
 {
@@ -13,47 +13,46 @@ int put_char(struct psh_file_t *file, char *buffer, int count)
 {
     return write(1, buffer, count);
 }
-/*
-int execute(struct psh_process_t *proc, int argc, char **argv)
+
+int execute(struct psh_file_frame_t *f, int argc, char **argv)
 {
-    psh_print(proc->stdout, "In basic-command!\n");
+    psh_print("In basic-command!\n");
 }
 
-int read_some_file(struct psh_node_t *file, char *buffer, int count)
+int read_some_file(struct psh_file_t *file, char *buffer, int count)
 {
     const char *text = "Some random text to display in PSH";
     int len = strlen(text);
-    *buffer = text[file->_chars_read];
-    return (len > file->_chars_read) ? 1 : 0;
+    *buffer = text[file->_file.current_position];
+    return (len > file->_file.current_position) ? 1 : 0;
 }
 
+#define MAX_NODES 100
 #define BUF_SIZE 1000
 #define PARAM_SIZE 10
-#define MAX_NODES 100
+psh_file nodes[MAX_NODES];
 char inbuf[BUF_SIZE];
 char *parambuf[PARAM_SIZE];
 
-psh_node node_buffer[MAX_NODES];
-
-psh_context cli;
-psh_node root;
-psh_file stdin_file;
-psh_file stdout_file;
-psh_node basic_command;
-psh_node some_file;
-*/
-
-#define MAX_NODES 100
-psh_file nodes[MAX_NODES];
+psh_cli cli;
 
 int main(void)
 {
+    cli.input.buffer = inbuf;
+    cli.input.size = BUF_SIZE;
+    cli.params.buffer = parambuf;
+    cli.params.size = PARAM_SIZE;
+    cli.delimiter = ' ';
+    cli.new_line = '\n';
+    cli.ps1 = "# ";
+
     psh_init_fs(nodes, MAX_NODES);
     psh_mount_std(get_char, put_char, put_char);
     psh_add_util_cmds();
-    for (psh_file *f = nodes; f != 0; f = f->_next)
+    psh_init_cli(&cli);
+    while (1)
     {
-        printf("%s - %s\n", f->name, f->help);
+        psh_process();
     }
 
     /*

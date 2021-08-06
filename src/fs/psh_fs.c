@@ -2,9 +2,6 @@
 #include "utils/psh_utils.h"
 
 #define MIN_NODE_CNT 5
-#define STD_IN_HELP "pSH standard input"
-#define STD_OUT_HELP "pSH standard output"
-#define STD_ERR_HELP "pSH standard error output"
 
 static struct
 {
@@ -33,18 +30,21 @@ int psh_init_fs(psh_file *buffer, int size)
 
 int psh_mount_std(psh_file_io_cb stdin_cb, psh_file_io_cb stdout_cb, psh_file_io_cb stderr_cb)
 {
-    files.frame.stdin = psh_mount_file("stdin", STD_IN_HELP);
-    files.frame.stdout = psh_mount_file("stdout", STD_OUT_HELP);
-    files.frame.stderr = psh_mount_file("stderr", STD_ERR_HELP);
+    files.frame.in = psh_mount_file(PSH_STD_IN_NAME, PSH_STD_IN_HELP);
+    files.frame.out = psh_mount_file(PSH_STD_OUT_NAME, PSH_STD_OUT_HELP);
+    files.frame.err = psh_mount_file(PSH_STD_ERR_NAME, PSH_STD_ERR_HELP);
 
-    if (!files.frame.stdin || !files.frame.stdout || !files.frame.stderr)
+    if (!files.frame.in || !files.frame.out || !files.frame.err)
     {
         return PSH_MOUNT_ERROR;
     }
 
-    files.frame.stdin->driver.read = stdin_cb;
-    files.frame.stdout->driver.write = stdout_cb;
-    files.frame.stderr->driver.write = stderr_cb;
+    files.frame.in->driver.read = stdin_cb;
+    files.frame.in->_file.is_special = 1;
+    files.frame.out->driver.write = stdout_cb;
+    files.frame.out->_file.is_special = 1;
+    files.frame.err->driver.write = stderr_cb;
+    files.frame.err->_file.is_special = 1;
 
     return PSH_OK;
 }
@@ -57,15 +57,16 @@ psh_file *psh_mount_file(const char *name, const char *help)
     {
         if (files.count < files.size)
         {
-            psh_file *f = files.buffer;
+            f = files.buffer;
             while (f->_next)
             {
                 f = f->_next;
             }
             f->_next = &files.buffer[files.count++];
-            f->_next->name = name;
-            f->_next->help = help;
-            f->_next->_next = 0;
+            f = f->_next;
+            f->name = name;
+            f->help = help;
+            f->_next = 0;
         }
     }
 
@@ -85,7 +86,7 @@ psh_file *psh_find_file(const char *name)
     return 0;
 }
 
-psh_file_frame *psh_get_node_frame(psh_file *file)
+psh_file_frame *psh_get_file_frame(psh_file *file)
 {
     files.frame.file = file;
     return &files.frame;
@@ -94,7 +95,6 @@ psh_file_frame *psh_get_node_frame(psh_file *file)
 psh_file *psh_open(const char *name)
 {
     psh_file *file = psh_find_file(name);
-
     if (file)
     {
         file->_file.current_position = 0;
@@ -112,11 +112,16 @@ int psh_read(psh_file *fd, char *buffer, int count)
 {
     if (fd)
     {
-        if (fd->_file.is_open)
+        if (fd->_file.is_special || fd->_file.is_open)
         {
             if (fd->driver.read)
             {
-                return fd->driver.read(fd, buffer, count);
+                int result = fd->driver.read(fd, buffer, count);
+                if (result > 0)
+                {
+                    fd->_file.current_position += result;
+                }
+                return result;
             }
             return PSH_OK;
         }
@@ -129,11 +134,16 @@ int psh_write(psh_file *fd, char *buffer, int count)
 {
     if (fd)
     {
-        if (fd->_file.is_open)
+        if (fd->_file.is_special || fd->_file.is_open)
         {
             if (fd->driver.write)
             {
-                return fd->driver.write(fd, buffer, count);
+                int result = fd->driver.write(fd, buffer, count);
+                if (result > 0)
+                {
+                    fd->_file.current_position += result;
+                }
+                return result;
             }
             return PSH_OK;
         }
@@ -146,7 +156,7 @@ int psh_seek(psh_file *fd, int count, int whence)
 {
     if (fd)
     {
-        if (fd->_file.is_open)
+        if (fd->_file.is_special || fd->_file.is_open)
         {
             if (fd->driver.seek)
             {
@@ -163,7 +173,7 @@ int psh_close(psh_file *fd)
 {
     if (fd)
     {
-        if (fd->_file.is_open)
+        if (fd->_file.is_special || fd->_file.is_open)
         {
             int result = PSH_OK;
             if (fd->driver.close)

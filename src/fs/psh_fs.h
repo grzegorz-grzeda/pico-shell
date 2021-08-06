@@ -3,15 +3,22 @@
 
 #include "utils/psh_errors.h"
 
+#define PSH_STD_IN_NAME "in"
+#define PSH_STD_IN_HELP "pSH standard input"
+#define PSH_STD_OUT_NAME "out"
+#define PSH_STD_OUT_HELP "pSH standard output"
+#define PSH_STD_ERR_NAME "err"
+#define PSH_STD_ERR_HELP "pSH standard error output"
+
 struct psh_file_t;
 
 typedef struct psh_file_frame_t
 {
     struct psh_file_t *root;
     struct psh_file_t *file;
-    struct psh_file_t *stdin;
-    struct psh_file_t *stdout;
-    struct psh_file_t *stderr;
+    struct psh_file_t *in;
+    struct psh_file_t *out;
+    struct psh_file_t *err;
 } psh_file_frame;
 
 typedef enum psh_lsk_whence_t
@@ -41,6 +48,7 @@ typedef struct psh_file_t
     } driver;
     struct
     {
+        int is_special;
         int is_open;
         int current_position;
         int size;
@@ -54,7 +62,7 @@ int psh_mount_std(psh_file_io_cb stdin_cb, psh_file_io_cb stdout_cb, psh_file_io
 
 psh_file *psh_mount_file(const char *name, const char *help);
 psh_file *psh_find_file(const char *name);
-int psh_init_node_frame(psh_file_frame *frame, psh_file *file);
+psh_file_frame *psh_get_file_frame(psh_file *file);
 
 psh_file *psh_open(const char *name);
 int psh_read(psh_file *fd, char *buffer, int count);

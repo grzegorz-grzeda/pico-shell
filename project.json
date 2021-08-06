@@ -5,8 +5,9 @@
         "x64": {
             "sources": [
                 "platform/x64/main.c",
+                "src/cli/psh_cli.c",
                 "src/fs/psh_fs.c",
-                "src/fs/psh_cmd.c",
+                "src/utils/psh_cmd.c",
                 "src/utils/psh_utils.c"
             ],
             "includes":[
