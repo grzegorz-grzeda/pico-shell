@@ -51,7 +51,6 @@ typedef struct psh_file_t
         int is_special;
         int is_open;
         int current_position;
-        int size;
     } _file;
     struct psh_file_t *_next;
 } psh_file;

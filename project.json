@@ -8,7 +8,8 @@
                 "src/cli/psh_cli.c",
                 "src/fs/psh_fs.c",
                 "src/utils/psh_cmd.c",
-                "src/utils/psh_utils.c"
+                "src/utils/psh_utils.c",
+                "src/ramdisc/psh_ramdisc.c"
             ],
             "includes":[
                 "-I.",

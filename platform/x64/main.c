@@ -3,6 +3,7 @@
 #include <string.h>
 #include "psh.h"
 #include "utils/psh_cmd.h"
+#include "ramdisc/psh_ramdisc.h"
 
 int get_char(struct psh_file_t *file, char *buffer, int count)
 {
@@ -19,20 +20,17 @@ int execute(struct psh_file_frame_t *f, int argc, char **argv)
     psh_print("In basic-command!\n");
 }
 
-int read_some_file(struct psh_file_t *file, char *buffer, int count)
-{
-    const char *text = "Some random text to display in PSH";
-    int len = strlen(text);
-    *buffer = text[file->_file.current_position];
-    return (len > file->_file.current_position) ? 1 : 0;
-}
-
 #define MAX_NODES 100
 #define BUF_SIZE 1000
 #define PARAM_SIZE 10
+#define MAX_RAMDISC_FILES 20
+#define MAX_RAMDISC_FILE_SIZE 100
+#define MAX_RAMDISC_DATA (MAX_RAMDISC_FILE_SIZE * MAX_RAMDISC_FILES)
 psh_file nodes[MAX_NODES];
 char inbuf[BUF_SIZE];
 char *parambuf[PARAM_SIZE];
+char ramdisc_data[MAX_RAMDISC_DATA];
+psh_ramdisc ramdisc_buffer[MAX_RAMDISC_FILES];
 
 psh_cli cli;
 
@@ -49,36 +47,20 @@ int main(void)
     psh_init_fs(nodes, MAX_NODES);
     psh_mount_std(get_char, put_char, put_char);
     psh_add_util_cmds();
+    psh_init_ramdisc(ramdisc_data, MAX_RAMDISC_DATA, MAX_RAMDISC_FILES, ramdisc_buffer, MAX_RAMDISC_FILES);
+
+    psh_file *cmd = psh_mount_file("basic-command", "Basic command to execute");
+    if (cmd)
+    {
+        cmd->driver.execute = execute;
+    }
+
+    psh_attach_ramdisc_to_file(psh_mount_file("example-text-file", ""));
+    psh_attach_ramdisc_to_file(psh_mount_file("text", ""));
+
     psh_init_cli(&cli);
     while (1)
     {
         psh_process();
     }
-
-    /*
-    stdin_file.read = get_char;
-    stdout_file.write = put_char;
-    cli.cli.input.buffer = inbuf;
-    cli.cli.input.size = BUF_SIZE;
-    cli.cli.cmd_params.params = parambuf;
-    cli.cli.cmd_params.size = PARAM_SIZE;
-    cli.cli.ps1 = "# ";
-    cli.cli.delimiter = ' ';
-    cli.cli.new_line = '\n';
-    cli.cli.echo = 0;
-    psh_init(&cli, &root, &stdin_file, &stdout_file, 0);
-
-    basic_command.name = "basic-command";
-    basic_command.help = "Basic command to execute";
-    basic_command.execute = execute;
-    psh_mound_file(&cli, &basic_command);
-
-    some_file.name = "some-file";
-    some_file.help = "Some random file to read";
-    some_file.read = read_some_file;
-    psh_mound_file(&cli, &some_file);
-
-    while (1)
-        psh_execute(&cli);
-        */
 }

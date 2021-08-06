@@ -9,6 +9,8 @@
 #define PSH_LS_CMD_HELP "List pico-filesystem content"
 #define PSH_CAT_CMD_NAME "cat"
 #define PSH_CAT_CMD_HELP "List content of a readable file"
+#define PSH_ECHO_CMD_NAME "echo"
+#define PSH_ECHO_CMD_HELP "Echoes arguments to standard output"
 
 int psh_add_util_cmds(void);
 
